@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+</style>
+
+<script>
+
+var PRODUCTOS = {
+  frecuencias: [],  // array para almacenar los datos
+
+  calcular: function() {    // ALGORITMO
+  	var k1 = document.getElementById("k1Input").valueAsNumber;
+  	var f1 = document.getElementById("f1Input").valueAsNumber;
+  	var k2 = document.getElementById("k2Input").valueAsNumber;
+  	var f2 = document.getElementById("f2Input").valueAsNumber;
+  	var fLow = document.getElementById("fLowInput").valueAsNumber;
+  	var fHi = document.getElementById("fHiInput").valueAsNumber;
+
+  	var fOut = 0;
+    var armonico = {};
+
+    for (var m = 0; m <= k1; m++) {
+      for (var n = 0; n <= k2; n++) {
+        if (m != 0 || n != 0) { // When both zero does not execute
+          if ((m != 0 && n != 1) || (m != 1 && n != 0)) { // Fundamentals not calculated
+            fOut = m * f1 + n * f2 // Harmonics and sum products
+            if (fOut >= fLow && fOut <= fHi) {  // ¿Fout in the output band?
+              armonico = {order:m+n,frequency:fOut, m:m, n:n};
+              this.frecuencias.push(armonico);
+            }
+          }
+        }
+      }
+    }
+  },
+
+  ordenar: function() {    // ORDER BY : order, m, n frequency
+    // Ordena por frecuencias
+    this.frecuencias.sort(function(a,b){
+      if (a.order > b.order) {
+        return 1;
+        }
+      if (a.order < b.order) {
+        return -1;
+      }
+      // Ordena cada grupo de frecuencias por m
+      if (a.order == b.order) {
+        if (a.frequency > b.frequency){
+          return 1;
+        }
+        if (a.frequency < b.frequency){
+          return -1;
+        }
+      }
+      return 0;
+    });
+  }
+}
+
+var TABLA = {
+  color1 : "#D8D8D8",
+  color2 : "#C6C6C6",
+
+  formatoMiles: function(valor) {
+    valor = valor.toString(); // = "31455787"
+    var long = valor.length; // = 8
+    var salida = (valor.substr(0,long%3)).toString();  // = "31"
+    valor = valor.slice(long%3);  // = "455787"
+    var veces = valor.length/3; // = 2
+    for (var i = 0; i < veces ; i++) {
+      salida += "." + valor.substr(i*3,3); // = 31.455
+    }
+    // si la long de valor es multiplo de 3, elimina el primer punto
+    // que fue agregado durante la primera pasada del FOR
+    if (long%3 == 0) {
+      salida = salida.slice(1);
+    }
+    return salida;
+  },
+  create: function() {
+    // lee PRODUCTOS.frecuencias[] y llena una tabla
+    var newOrder = 0;
+    var oldOrder = 0;
+    var altColor = false;
+    var rowColor;
+    // elementos de la tabla
+    var miTabla = document.querySelector("table");  //nodo de la tabla
+    var newTr;  // para elemento tr
+    var newTd1, newTd2, newTd3, newTd4; // para elementos td
+
+    //DISPLAY m+n, n, m
+    frecuencias = PRODUCTOS.frecuencias;
+    for(i=0;i<frecuencias.length;i++) {
+      // Alterna colores de las filas agrupadas por order
+      newOrder = frecuencias[i].order;
+      if (newOrder != oldOrder) {
+        rowColor = (altColor) ? this.color1 : this.color2;
+        altColor = !(altColor);
+      }
+      oldOrder = newOrder;
+      // Crea un tr y lo colorea
+      newTr = document.createElement("tr");
+      newTr.style.backgroundColor = rowColor;
+      // Crea 4 tds
+      newTd1 = document.createElement("td");
+      newTd2 = document.createElement("td");
+      newTd3 = document.createElement("td");
+      newTd4 = document.createElement("td");
+      // Escribe texto de cada td
+      newTd1.textContent = frecuencias[i].order;
+      newTd2.textContent = this.formatoMiles(frecuencias[i].frequency);
+      //newTd2.textContent = frecuencias[i].frequency;
+      newTd3.textContent = frecuencias[i].m;
+      newTd4.textContent = frecuencias[i].n;
+      // Agrega cada td al tr
+      newTr.appendChild(newTd1);
+      newTr.appendChild(newTd2);
+      newTr.appendChild(newTd3);
+      newTr.appendChild(newTd4);
+      // Agrega el tr a la tabla
+      miTabla.appendChild(newTr);
+    }
+  },
+  reset: function() {
+    // Escribe HTML en DIV #tabla para crear una tabla con 4 encabezados th
+    document.getElementById("tabla").innerHTML =
+    "<table style='width:400px' border='1'> \
+      <tr> \
+        <th style='width:100px'>ORDER</th> \
+        <th style='width:100px'>FREQUENCY</th> \
+        <th style='width:100px'>M</th> \
+        <th style='width:100px'>N</th> \
+      </tr> \
+    </table>";
+    PRODUCTOS.frecuencias = [];
+  }
+}
+
+function calcular() {
+  TABLA.reset();
+  PRODUCTOS.calcular();
+  PRODUCTOS.ordenar();
+  TABLA.create();
+}
+
+</script>
+</head>
+
+<body>
+<h1> Mixer Products Calculator </h1>
+
+<input  id="f1Input" value = "3333" type = "number"> : Frequency 1<br>
+<input  id="f2Input" value = "4444" type = "number"> : Frequency 2<br>
+<input  id="k1Input" value = "20" type = "number"> : Harmonic 1<br>
+<input  id="k2Input" value = "10" type = "number"> : Harmonic 2<br>
+<input  id="fLowInput" value = "30000" type = "number"> : Band low<br>
+<input  id="fHiInput" value = "50000" type = "number"> : Band hi<br>
+
+<p>
+  <button onclick = "calcular()">Calcular</button>
+</p>
+
+<div id="tabla"></div> <!-- contenedor tabla -->
+
+</body>
+</html>
